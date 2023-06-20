@@ -1,0 +1,142 @@
+source /muttrc.add
+
+#Speed up folder switch
+set sleep_time = 0
+
+# Mutt can cache headers of messages so they need to be downloaded just once.
+# This greatly improves speed when opening folders again later.
+#set header_cache     = /hub/mutt/cache/headers
+set message_cachedir = /hub/mutt/cache/bodies
+
+# Fetch new mails via offlineimap
+macro index,pager z "! echo 'Refreshing IMAP accounts, please wait...'; curl -X POST http://host.docker.internal:4001/offlineimap<enter>" "Refresh offlineimap"
+
+# Khard commands
+#complete email addresses by pressing the Tab-key in mutt's new mail dialog
+set query_command= "khard email --parsable '%s'"
+bind editor <Tab> complete-query
+bind editor ^T    complete
+#add email addresses to khard's address book
+#macro index,pager A "<pipe-message>khard add-email<return>" "add the sender email address to khard"
+
+# Mutt bindings
+bind index <tab> sidebar-toggle-visible
+bind index n   sidebar-next
+bind index p     sidebar-prev
+bind index <return>  sidebar-open
+bind index f next-entry
+bind index b previous-entry
+
+#bind pager f <next-line>
+#bind pager b <previous-line>
+#bind pager F <forward-message>
+#bind pager r <reply>
+#bind pager w <flag-message>
+#bind pager i <save-entry>
+#bind pager <delete> <delete-entry>
+
+# Mutt Behaviour
+set sig_on_top        = yes
+set mime_forward      = ask-yes
+set move              = no
+set sort              = 'threads'
+set sort_aux          = 'reverse-last-date-received'
+set sort_re           = yes
+set pager_stop        = yes
+set pager_index_lines = 20
+set quit              = ask-yes
+set fast_reply        = yes
+set include           = yes
+set reverse_name      = yes
+set pager_context     = 3     # number of context lines to show
+set pager_stop        = yes   # don't go to next message automatically
+set menu_scroll       = yes   # scroll in menus
+set tilde             = yes   # show tildes like in vim
+set markers           = no    # no ugly plus signs
+set edit_headers      = yes
+
+auto_view application/x-pkcs7-mime
+
+# Ignore all headers
+ignore *
+# Then un-ignore the ones I want to see
+unignore From:
+unignore To:
+unignore Reply-To:
+unignore Mail-Followup-To:
+unignore Subject:
+unignore Date:
+unignore Organization:
+unignore Newsgroups:
+unignore CC:
+unignore BCC:
+unignore Message-ID:
+unignore X-Mailer:
+unignore User-Agent:
+unignore X-Junked-Because:
+unignore X-SpamProbe:
+unignore X-Virus-hagbard:
+# Now order the visable header lines
+hdr_order From: Subject: To: CC: BCC: Reply-To: Mail-Followup-To: Date: Organization: User-Agent: X-Mailer:
+
+set index_format = "%S %-20.20F %-20.20s %<[y?%<[m?%<[d?%[%H:%M ]&%[%a %d]>&%[%b %d]>&%[%m/%y ]>"
+set xterm_set_titles  = yes
+
+# Sidebar
+set sidebar_visible=no
+set sidebar_divider_char='|'
+set mail_check_stats=yes
+set sidebar_format='%B%?F? [%F]?%* %?N?%N/?%S'
+set sidebar_short_path=yes
+set sidebar_delim_chars='/'
+set sidebar_folder_indent=yes
+set sidebar_indent_string="  "
+set sidebar_width=25
+set sidebar_sort_method=path
+
+# View attachments properly.
+set mailcap_path  = /hub/mutt/mailcap
+bind attach <return> view-mailcap
+
+# 'L' performs a notmuch query, showing only the results
+macro index L "<enter-command>unset wait_key<enter><shell-escape>read -p 'notmuch query: ' x; \
+  echo \$x >~/.cache/mutt_terms<enter><limit>~i \"\`notmuch search --output=messages \$(cat ~/.cache/mutt_terms) | \
+  head -n 600 | perl -le '@a=<>;chomp@a;s/\^id:// for@a;$,=\"|\";print@a'\`\"<enter>" "show only messages matching a notmuch pattern"
+# 'a' shows all messages again (supersedes default <alias> binding)
+macro index a "<limit>all\n" "show all messages (undo limit)"
+
+color index      brightgreen    default  ~F # Markierte Nachrichten
+color index      red            default  ~N # Neue Nachrichten
+color index      red            default  ~O # Ungelesene Nachrichten
+
+### Header
+color header default default "^from:"
+color header default default "^to:"
+color header default default "^cc:"
+color header default default "^date:"
+color header default default "^newsgroups:"
+color header default default "^reply-to:"
+color header default default "^subject:"
+color header default default "^x-spam-rule:"
+color header default default "^x-mailer:"
+color header default default "^message-id:"
+color header default default "^Organization:"
+color header default default "^Organisation:"
+color header default default "^User-Agent:"
+color header default default "^message-id: .*pine"
+color header default default "^X-Fnord:"
+color header default default "^X-WebTV-Stationery:"
+color header default default "^x-spam-rule:"
+color header default default "^x-mailer:"
+color header default default "^message-id:"
+color header default default "^Organization:"
+color header default default "^Organisation:"
+color header default default "^User-Agent:"
+color header default default "^message-id: .*pine"
+color header default default "^X-Fnord:"
+color header default default "^X-WebTV-Stationery:"
+color header default default "^X-Message-Flag:"
+color header default default "^X-Spam-Status:"
+color header default default "^X-SpamProbe:"
+color header default default "^X-SpamProbe: SPAM"
+

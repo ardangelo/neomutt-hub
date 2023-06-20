@@ -1,0 +1,39 @@
+import SimpleHTTPServer
+import SocketServer
+import subprocess
+import sys
+
+ENDPOINT = sys.argv[1]
+COMMAND = sys.argv[2].split()
+
+class MyRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    def do_POST(self):
+        if self.path == ENDPOINT:
+            try:
+                # Run the offlineimap command
+                output = subprocess.check_output(COMMAND)
+                status = 'Success'
+            except subprocess.CalledProcessError as e:
+                output = str(e.output)
+                status = 'Failure'
+
+            # Set the response headers
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+
+            # Set the response body
+            response = '{}\n{}'.format(status, output)
+            self.wfile.write(response)
+        else:
+            # Handle other requests with default behavior
+            SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+
+# Set up the server
+PORT = 4000
+Handler = MyRequestHandler
+httpd = SocketServer.TCPServer(("", PORT), Handler)
+
+# Start the server
+print "Server listening on internal port", PORT
+httpd.serve_forever()
