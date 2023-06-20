@@ -1,4 +1,5 @@
 source /muttrc.add
+source /hub/imap-mailboxes
 
 #Speed up folder switch
 set sleep_time = 0

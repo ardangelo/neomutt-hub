@@ -1,2 +1,7 @@
 */serve_command.py2
 */serve_command.py3
+
+*/muttrc.add
+*/*rc
+neomutt/mutt.d/accounts
+accounts.yml

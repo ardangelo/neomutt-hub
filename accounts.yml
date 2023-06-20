@@ -1,0 +1,18 @@
+Account1:
+  type: imap
+  name: Your Name
+  email: mail@mail.com
+  imap-host: imap-host
+  imap-port: imap-port
+  imap-user: imap-user
+  imap-password: imap-password
+  smtp-host: smtp-host
+  smtp-port: smtp-port
+  smtp-user: smtp-user
+  smtp-password: smtp-password
+
+Notifications:
+  type: maildir
+
+SMS:
+  type: maildir

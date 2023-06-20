@@ -1,4 +1,0 @@
-set mbox_type       = Maildir
-set folder          = /hub/accounts/
-set spoolfile       = "+Notifications/Inbox"
-
