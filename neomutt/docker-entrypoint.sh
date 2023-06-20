@@ -1,6 +1,8 @@
 #!/bin/bash
 
-touch /hub/imap-mailboxes
+# Refresh OfflineIMAP
+echo "Refreshing IMAP accounts..."
+curl -X POST http://host.docker.internal:4001/offlineimap
 
 # Run notmuch service
 notmuch new
