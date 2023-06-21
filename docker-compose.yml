@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  offlineimap:
+    image: offlineimap:latest
+    ports:
+      - '4001:4000'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - '$HOME/hub:/hub'
+
+  neomutt:
+    image: neomutt:latest
+    ports:
+      - '4000:4000'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - '$HOME/hub:/hub'
+    stdin_open: true
+    tty: true
+    depends_on:
+      - offlineimap
