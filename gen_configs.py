@@ -6,11 +6,18 @@ L_NEOMUTT_ACC_DIR = "neomutt/mutt.d/accounts/"
 L_NEOMUTTRC_ADD = "neomutt/muttrc.add"
 L_NOTMUCHRC = "neomutt/notmuchrc"
 L_OFFLINEIMAPRC = "offlineimap/offlineimaprc"
+L_VDIRSYNCERRC = "neomutt/vdirsyncerrc"
+L_KHARDRC = "neomutt/khardrc"
+L_KHALRC = "neomutt/khalrc"
 
 # Container targets
 C_OFFLINEIMAP_ACC_DIR = "/hub/accounts/"
 C_OFFLINEIMAP_MAILBOXES = "/hub/imap-mailboxes"
 C_NEOMUTT_ACC_DIR = "/mutt/accounts/"
+C_VDIRSYNCER_DIR = "/hub/vdirsyncer/"
+C_VDIRSYNCER_CALENDARS_DIR = "/hub/calendars/"
+C_VDIRSYNCER_CONTACTS_DIR = "/hub/contacts/"
+C_KHAL_DIR = "/hub/khal/"
 
 # Deferred placeholders to combine f-string and .format
 _0 = '{0}'
@@ -27,10 +34,11 @@ set mbox_type = Maildir
 set folder = {C_OFFLINEIMAP_ACC_DIR}
 set spoolfile = "+{_0}/Inbox"
 ''' # 0: label
-def gen_maildir_account(label, _):
+def gen_maildir_accounts(maildir_accs):
 	os.makedirs(L_NEOMUTT_ACC_DIR, exist_ok=True)
-	with open(L_NEOMUTT_ACC_DIR + label, 'w') as file:
-		file.write(MAILDIR_ACCOUNT_BODY.format(label))
+	for label in maildir_accs.keys():
+		with open(L_NEOMUTT_ACC_DIR + label, 'w') as file:
+			file.write(MAILDIR_ACCOUNT_BODY.format(label))
 
 NEOMUTTRC_HEADER = f'''
 set folder = {C_OFFLINEIMAP_ACC_DIR}
@@ -169,15 +177,119 @@ def gen_offlineimaprc(imap_accs):
 			for (label, acc) in imap_accs.items()])
 		file.write(OFFLINEIMAPRC_FOOTER)
 
+VDIRSYNCERRC_HEADER = f'''
+[general]
+status_path = "{C_VDIRSYNCER_DIR}/status/"
+'''
+VDIRSYNCER_CONTACT_ACCOUNT_ENTRY = f'''
+[pair {_0}Contacts]
+a = "{_0}ContactsLocal"
+b = "{_0}ContactsRemote"
+collections = ["from b"]
+metadata = ["{_0}"]
+conflict_resolution = "a wins"
+[storage {_0}ContactsLocal]
+type = "filesystem"
+path = "{C_VDIRSYNCER_CONTACTS_DIR}/{_0}/"
+fileext = ".vcf"
+[storage {_0}ContactsRemote]
+type = "carddav"
+url = "{_1}"
+username = "{_2}"
+password = "{_3}"
+''' # 0: label 1: host 2: user 3: password
+VDIRSYNCER_CALENDAR_ACCOUNT_ENTRY = f'''
+[pair {_0}Calendar]
+a = "{_0}CalendarLocal"
+b = "{_0}CalendarRemote"
+collections = ["from b"]
+metadata = ["{_0}", "blue"]
+conflict_resolution = "a wins"
+[storage {_0}CalendarLocal]
+type = "filesystem"
+path = "{C_VDIRSYNCER_CALENDARS_DIR}/{_0}"
+fileext = ".ics"
+[storage {_0}CalendarRemote]
+type = "caldav"
+url = "{_1}"
+username = "{_2}"
+password = "{_3}"
+''' # 0: label 1: host 2: user 3: password
+def gen_vdirsyncerrc(caldav_accs, carddav_accs):
+	with open(L_VDIRSYNCERRC, 'w') as file:
+		file.write(VDIRSYNCERRC_HEADER)
+		write_lines(file, [
+			VDIRSYNCER_CALENDAR_ACCOUNT_ENTRY.format(label,
+				acc['host'], acc['user'], acc['password'])
+			for (label, acc) in caldav_accs.items()])
+		write_lines(file, [
+			VDIRSYNCER_CONTACT_ACCOUNT_ENTRY.format(label,
+				acc['host'], acc['user'], acc['password'])
+			for (label, acc) in carddav_accs.items()])
+
+KHALRC_HEADER = f'''
+[sqlite]
+path = {C_KHAL_DIR}/khal.db
+[locale]
+local_timezone = America/Chicago
+default_timezone = America/Chicago
+timeformat = %H:%M
+dateformat = %Y-%m-%d
+longdateformat = %Y-%m-%d
+datetimeformat =  %Y-%m-%d
+longdatetimeformat = %Y-%m-%dT%H:%M
+firstweekday = 0
+[default]
+# in agenda/calendar display, shows all days even if there is no event
+show_all_days = True
+[calendars]
+'''
+KHALRC_ENTRY = f'''
+[[{_0}{_1}]]
+path = {C_VDIRSYNCER_CALENDARS_DIR}{_0}/{_2}
+''' # 0: label 1: calendar_label 2: collection
+def gen_khalrc(caldav_accs):
+	with open(L_KHALRC, 'w') as file:
+		file.write(KHALRC_HEADER)
+		for (label, acc) in caldav_accs.items():
+			write_lines(file, [
+				KHALRC_ENTRY.format(label, cal_label, cal_id)
+				for (cal_label, cal_id) in acc['collections'].items()])
+
+KHARDRC_HEADER = f'''
+[general]
+editor = nano
+merge_editor = nano
+default_action = list
+show_nicknames = no
+[view]
+theme = dark
+[addressbooks]
+'''
+KHARDRC_ENTRY = f'''
+[[{_0}]]
+path = {C_VDIRSYNCER_CONTACTS_DIR}{_0}/{_2}/
+''' # 0: label 1: card_label 2: collection
+def gen_khardrc(carddav_accs):
+	with open(L_KHARDRC, 'w') as file:
+		file.write(KHARDRC_HEADER)
+		for (label, acc) in carddav_accs.items():
+			write_lines(file, [
+				KHARDRC_ENTRY.format(label, card_label, card_id)
+				for (card_label, card_id) in acc['collections'].items()])
+
 with open('accounts.yml', 'r') as accounts_yaml:
 	accounts = yaml.safe_load(accounts_yaml)
 
-for (name, acc) in accounts.items():
-	if acc['type'] == 'maildir':
-		gen_maildir_account(name, acc)
+def filter_by_type(accs, types):
+	return {k: v for (k, v) in accs.items() if v['type'] in types}
 
-gen_neomuttrc_add(accounts.keys())
-
-imap_accounts = {k: v for (k, v) in accounts.items() if v['type'] == 'imap'}
-gen_notmuchrc(imap_accounts)
-gen_offlineimaprc(imap_accounts)
+gen_maildir_accounts(filter_by_type(accounts, ['maildir']))
+gen_neomuttrc_add(filter_by_type(accounts, ['imap', 'maildir']))
+gen_notmuchrc(filter_by_type(accounts, ['imap']))
+gen_offlineimaprc(filter_by_type(accounts, ['imap']))
+gen_vdirsyncerrc(
+	filter_by_type(accounts, ['caldav']),
+	filter_by_type(accounts, ['carddav']))
+gen_khalrc(filter_by_type(accounts, ['caldav']))
+gen_khardrc(filter_by_type(accounts, ['carddav']))

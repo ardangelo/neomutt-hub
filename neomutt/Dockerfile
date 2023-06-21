@@ -6,7 +6,7 @@ RUN apk update && apk add \
 
 # Install neomutt, notmuch, khal, khard
 RUN apk add \
-	neomutt notmuch khal
+	neomutt notmuch khal vdirsyncer
 RUN apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
 	khard
 
@@ -23,6 +23,11 @@ COPY muttrc.base /muttrc.base
 COPY muttrc.add /muttrc.add
 ADD mutt.d /mutt
 RUN ln -s /muttrc.base /root/.muttrc
+
+# Configure WebDAV
+COPY vdirsyncerrc /root/.config/vdirsyncer/config
+COPY khardrc /root/.config/khard/khard.conf
+COPY khalrc /root/.config/khal/config
 
 # Configure entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh

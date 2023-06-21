@@ -1,4 +1,7 @@
-Account1:
+Notifications:
+  type: maildir
+
+Imap1:
   type: imap
   name: Your Name
   email: mail@mail.com
@@ -11,8 +14,19 @@ Account1:
   smtp-user: smtp-user
   smtp-password: smtp-password
 
-Notifications:
-  type: maildir
+CalDav1:
+  type: caldav
+  host: caldav-host
+  user: caldav-user
+  password: caldav-password
+  collections:
+    Events1: events1-uuid-from-caldav-server
+    Events2: events2-uuid-from-caldav-server
 
-SMS:
-  type: maildir
+CardDav1:
+  type: carddav
+  host: carddav-host
+  user: carddav-user
+  password: carddav-password
+  collections:
+    Contacts: contacts-uuid-from-carddav-server
