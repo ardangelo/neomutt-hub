@@ -1,13 +1,26 @@
-source /muttrc.add
-source /hub/imap-mailboxes
+from config.defs import *
+
+MAILDIR_ACCOUNT_BODY = f'''
+set mbox_type = Maildir
+set folder = {C_OFFLINEIMAP_ACC_DIR}
+set spoolfile = "+{p0}/Inbox"
+''' # 0: label
+def gen_maildir_accounts(maildir_accs):
+	for label in maildir_accs.keys():
+		with open(L_NEOMUTT_ACC_DIR + label, 'w') as file:
+			file.write(MAILDIR_ACCOUNT_BODY.format(label))
+
+NEOMUTTRC_BODY = f'''
+source {C_NEOMUTTRC_ACCOUNTS}
+source {C_OFFLINEIMAP_MAILBOXES}
 
 #Speed up folder switch
 set sleep_time = 0
 
 # Mutt can cache headers of messages so they need to be downloaded just once.
 # This greatly improves speed when opening folders again later.
-#set header_cache     = /hub/mutt/cache/headers
-set message_cachedir = /hub/mutt/cache/bodies
+#set header_cache     = {C_BASE_DIR}cache/headers
+set message_cachedir = {C_BASE_DIR}cache/bodies
 
 # Fetch new mails via offlineimap
 macro index,pager z "! echo 'Refreshing IMAP accounts, please wait...'; curl -X POST http://host.docker.internal:4001/offlineimap<enter>" "Refresh offlineimap"
@@ -56,8 +69,6 @@ set tilde             = yes   # show tildes like in vim
 set markers           = no    # no ugly plus signs
 set edit_headers      = yes
 
-auto_view application/x-pkcs7-mime
-
 # Ignore all headers
 ignore *
 # Then un-ignore the ones I want to see
@@ -96,7 +107,8 @@ set sidebar_width=25
 set sidebar_sort_method=path
 
 # View attachments properly.
-set mailcap_path  = /hub/mutt/mailcap
+auto_view text/html
+auto_view text/plain
 bind attach <return> view-mailcap
 
 # 'L' performs a notmuch query, showing only the results
@@ -140,4 +152,51 @@ color header default default "^X-Message-Flag:"
 color header default default "^X-Spam-Status:"
 color header default default "^X-SpamProbe:"
 color header default default "^X-SpamProbe: SPAM"
+'''
+def gen_neomuttrc():
+	with open(L_NEOMUTTRC, 'w') as file:
+		file.write(NEOMUTTRC_BODY)
 
+NEOMUTTRC_ACCOUNTS_HEADER = f'''
+set folder = {C_OFFLINEIMAP_ACC_DIR}
+'''
+NEOMUTTRC_ACCOUNTS_SOURCE_ENTRY = f'''
+source {C_NEOMUTT_ACC_DIR}{p0}
+''' # 0: label
+NEOMUTTRC_ACCOUNTS_FOLDER_HOOK_ENTRY = f'''
+folder-hook {p0}/* source {C_NEOMUTT_ACC_DIR}{p0}
+''' # 0: label
+NEOMUTTRC_ACCOUNTS_NOTMUCH_HEADER = f'''
+set nm_default_url = "notmuch://{C_OFFLINEIMAP_ACC_DIR}"
+virtual-mailboxes "Hub" "notmuch://?query=date:2022..today and \\
+'''
+NEOMUTTRC_ACCOUNTS_NOTMUCH_HUB_CONDITION = f'''
+folder:{p0}/Inbox
+''' # 0: label
+NEOMUTTRC_ACCOUNTS_PAGE_0 = f'''
+macro index,pager 0 "<change-vfolder>Hub<enter>"
+'''
+NEOMUTTRC_ACCOUNTS_PAGE_ENTRY = f'''
+macro index,pager {p0} "<enter-command>source {C_NEOMUTT_ACC_DIR}{p1}<enter><change-folder>+{p1}/Inbox<enter>"
+''' # 0: index 1: label
+def gen_neomuttrc_accounts(labels):
+	with open(L_NEOMUTTRC_ACCOUNTS, 'w') as file:
+		file.write(NEOMUTTRC_ACCOUNTS_HEADER)
+
+		write_lines(file, [
+			NEOMUTTRC_ACCOUNTS_SOURCE_ENTRY.format(label)
+			for label in labels])
+
+		write_lines(file, [
+			NEOMUTTRC_ACCOUNTS_FOLDER_HOOK_ENTRY.format(label)
+			for label in labels])
+
+		file.write(NEOMUTTRC_ACCOUNTS_NOTMUCH_HEADER)
+		file.write('(' + ' or '.join([
+			NEOMUTTRC_ACCOUNTS_NOTMUCH_HUB_CONDITION.format(label).strip()
+			for label in labels]) + ')')
+
+		file.write(NEOMUTTRC_ACCOUNTS_PAGE_0)
+		write_lines(file, [
+			NEOMUTTRC_ACCOUNTS_PAGE_ENTRY.format(i, label)
+			for (i, label) in enumerate(labels, 1)])

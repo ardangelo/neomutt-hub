@@ -10,24 +10,24 @@ RUN apk add \
 RUN apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
 	khard
 
-# Install editors
-RUN apk add nano
+# Install editors and viewers
+RUN apk add nano w3m
+ENV EDITOR=nano
 
 # Configure notmuch
-COPY notmuchrc /root/.notmuch-config
+RUN ln -s /hub/config/notmuchrc /root/.notmuch-config
 COPY serve_command.py3 /serve_command.py3
 EXPOSE 4000
 
-# Configure Neomutt
-COPY muttrc.base /muttrc.base
-COPY muttrc.add /muttrc.add
-ADD mutt.d /mutt
-RUN ln -s /muttrc.base /root/.muttrc
+# Configure Neomutt and mailcap
+RUN ln -s /hub/config/muttrc /root/.muttrc \
+ && ln -s /hub/config/mailcaprc /root/.mailcap
 
 # Configure WebDAV
-COPY vdirsyncerrc /root/.config/vdirsyncer/config
-COPY khardrc /root/.config/khard/khard.conf
-COPY khalrc /root/.config/khal/config
+RUN mkdir -p /root/.config/vdirsyncer /root/.config/khard /root/.config/khal \
+ && ln -s /hub/config/vdirsyncerrc /root/.config/vdirsyncer/config \
+ && ln -s /hub/config/khardrc /root/.config/khard/khard.conf \
+ && ln -s /hub/config/khalrc /root/.config/khal/config
 
 # Configure entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh

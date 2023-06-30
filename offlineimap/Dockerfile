@@ -8,7 +8,7 @@ RUN apk update && apk add \
 RUN pip install offlineimap
 
 # Configure OfflineIMAP
-COPY offlineimaprc /root/.offlineimaprc
+RUN ln -s /hub/config/offlineimaprc /root/.offlineimaprc
 
 # Configure OfflineIMAP service
 COPY serve_command.py2 /serve_command.py2
