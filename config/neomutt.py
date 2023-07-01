@@ -5,10 +5,24 @@ set mbox_type = Maildir
 set folder = {C_OFFLINEIMAP_ACC_DIR}
 set spoolfile = "+{p0}/Inbox"
 ''' # 0: label
-def gen_maildir_accounts(maildir_accs):
+def gen_neomutt_maildir_accounts(maildir_accs):
 	for label in maildir_accs.keys():
 		with open(L_NEOMUTT_ACC_DIR + label, 'w') as file:
 			file.write(MAILDIR_ACCOUNT_BODY.format(label))
+
+IMAP_ACCOUNT_BODY = f'''
+set sendmail = "/usr/bin/msmtp -a {p0}"
+set realname = "{p1}"
+set from = "{p2}"
+set mbox_type = Maildir
+set spoolfile = "+{p0}/Inbox"
+set record = "+{p0}/Sent"
+set postponed = "+{p0}/Drafts"
+''' # 0: label 1: name 2: email
+def gen_neomutt_imap_accounts(imap_accs):
+	for (label, acc) in imap_accs.items():
+		with open(L_NEOMUTT_ACC_DIR + label, 'w') as file:
+			file.write(IMAP_ACCOUNT_BODY.format(label, acc['name'], acc['email']))
 
 NEOMUTTRC_BODY = f'''
 source {C_NEOMUTTRC_ACCOUNTS}
@@ -19,8 +33,8 @@ set sleep_time = 0
 
 # Mutt can cache headers of messages so they need to be downloaded just once.
 # This greatly improves speed when opening folders again later.
-#set header_cache     = {C_BASE_DIR}cache/headers
-set message_cachedir = {C_BASE_DIR}cache/bodies
+#set header_cache     = {C_NEOMUTT_DIR}cache/headers
+set message_cachedir = {C_NEOMUTT_DIR}cache/bodies
 
 # Fetch new mails via offlineimap
 macro index,pager z "! echo 'Refreshing IMAP accounts, please wait...'; curl -X POST http://host.docker.internal:4001/offlineimap<enter>" "Refresh offlineimap"
@@ -69,6 +83,9 @@ set tilde             = yes   # show tildes like in vim
 set markers           = no    # no ugly plus signs
 set edit_headers      = yes
 
+auto_view text/html
+auto_view text/plain
+
 # Ignore all headers
 ignore *
 # Then un-ignore the ones I want to see
@@ -112,11 +129,14 @@ auto_view text/plain
 bind attach <return> view-mailcap
 
 # 'L' performs a notmuch query, showing only the results
-macro index L "<enter-command>unset wait_key<enter><shell-escape>read -p 'notmuch query: ' x; \
-  echo \$x >~/.cache/mutt_terms<enter><limit>~i \"\`notmuch search --output=messages \$(cat ~/.cache/mutt_terms) | \
-  head -n 600 | perl -le '@a=<>;chomp@a;s/\^id:// for@a;$,=\"|\";print@a'\`\"<enter>" "show only messages matching a notmuch pattern"
+macro index L \\
+  "<enter-command>unset wait_key<enter><shell-escape>read -p 'notmuch query: ' x; \\
+  echo \$x >~/.cache/mutt_terms<enter><limit>~i \\
+  \\"\`notmuch search --output=messages \$(cat ~/.cache/mutt_terms) | \\
+    head -n 600 | perl -le '@a=<>;chomp@a;s/\^id:// for@a;$,=\"|\";print@a'\`\\"<enter>" \\
+  "show only messages matching a notmuch pattern"
 # 'a' shows all messages again (supersedes default <alias> binding)
-macro index a "<limit>all\n" "show all messages (undo limit)"
+macro index a "<limit>all\\n" "show all messages (undo limit)"
 
 color index      brightgreen    default  ~F # Markierte Nachrichten
 color index      red            default  ~N # Neue Nachrichten

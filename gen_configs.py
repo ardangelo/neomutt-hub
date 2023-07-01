@@ -2,7 +2,8 @@ import yaml
 import os
 
 from config.defs import *
-from config.neomutt import gen_maildir_accounts, gen_neomuttrc, gen_neomuttrc_accounts
+from config.neomutt import gen_neomutt_maildir_accounts, gen_neomutt_imap_accounts, \
+	gen_neomuttrc, gen_neomuttrc_accounts
 from config.notmuch import gen_notmuchrc
 from config.offlineimap import gen_offlineimaprc
 from config.vdirsyncer import gen_vdirsyncerrc
@@ -19,7 +20,8 @@ def filter_by_type(accs, types):
 os.makedirs(L_CONFIG_DIR, exist_ok=True)
 os.makedirs(L_NEOMUTT_ACC_DIR, exist_ok=True)
 
-gen_maildir_accounts(filter_by_type(accounts, ['maildir']))
+gen_neomutt_maildir_accounts(filter_by_type(accounts, ['maildir']))
+gen_neomutt_imap_accounts(filter_by_type(accounts, ['imap']))
 gen_neomuttrc()
 gen_neomuttrc_accounts(filter_by_type(accounts, ['imap', 'maildir']))
 gen_notmuchrc(filter_by_type(accounts, ['imap']))
