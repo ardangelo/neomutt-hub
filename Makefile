@@ -1,18 +1,16 @@
 .PHONY: start attach stop clean
 
-all: stamp-config stamp-neomutt stamp-offlineimap
+all: stamp-configs stamp-neomutt stamp-offlineimap
 
-stamp-config: accounts.yml
+stamp-configs: accounts.yml
 	python gen_configs.py
-	touch stamp-config
+	touch stamp-configs
 
 stamp-neomutt: neomutt/Dockerfile
-	cp serve_command.py3 neomutt
 	docker build -t neomutt neomutt
 	touch stamp-neomutt
 
 stamp-offlineimap: offlineimap/Dockerfile
-	cp serve_command.py2 offlineimap
 	docker build -t offlineimap offlineimap
 	touch stamp-offlineimap
 

@@ -11,6 +11,7 @@ L_VDIRSYNCERRC = f"{L_CONFIG_DIR}vdirsyncerrc"
 L_KHARDRC = f"{L_CONFIG_DIR}khardrc"
 L_KHALRC = f"{L_CONFIG_DIR}khalrc"
 L_MAILCAPRC = f"{L_CONFIG_DIR}mailcaprc"
+L_SERVERC = f"{L_CONFIG_DIR}serverc"
 
 # Container targets
 C_CONFIG_DIR = "/hub/config/"

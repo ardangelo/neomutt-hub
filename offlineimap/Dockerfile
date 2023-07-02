@@ -11,9 +11,9 @@ RUN pip install offlineimap
 RUN ln -s /hub/config/offlineimaprc /root/.offlineimaprc
 
 # Configure OfflineIMAP service
-COPY serve_command.py2 /serve_command.py2
+COPY serve.py2 /serve.py2
 EXPOSE 4000
 
 # Define the entry point
-ENTRYPOINT ["/usr/local/bin/python2", "/serve_command.py2", \
+ENTRYPOINT ["/usr/local/bin/python2", "/serve.py2", \
 	"/offlineimap", "/usr/local/bin/offlineimap -o"]

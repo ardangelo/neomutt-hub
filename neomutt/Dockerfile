@@ -16,7 +16,9 @@ ENV EDITOR=nano
 
 # Configure notmuch
 RUN ln -s /hub/config/notmuchrc /root/.notmuch-config
-COPY serve_command.py3 /serve_command.py3
+
+# Request server dependencies
+RUN pip install pyyaml
 EXPOSE 4000
 
 # Configure Neomutt and mailcap
@@ -28,6 +30,9 @@ RUN mkdir -p /root/.config/vdirsyncer /root/.config/khard /root/.config/khal \
  && ln -s /hub/config/vdirsyncerrc /root/.config/vdirsyncer/config \
  && ln -s /hub/config/khardrc /root/.config/khard/khard.conf \
  && ln -s /hub/config/khalrc /root/.config/khal/config
+
+# Configure request server
+COPY serve.py3 /serve.py3
 
 # Configure entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh

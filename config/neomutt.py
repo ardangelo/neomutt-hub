@@ -30,6 +30,7 @@ source {C_OFFLINEIMAP_MAILBOXES}
 
 #Speed up folder switch
 set sleep_time = 0
+set timeout = 30
 
 # Mutt can cache headers of messages so they need to be downloaded just once.
 # This greatly improves speed when opening folders again later.

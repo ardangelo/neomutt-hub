@@ -10,6 +10,7 @@ from config.vdirsyncer import gen_vdirsyncerrc
 from config.khal import gen_khalrc
 from config.khard import gen_khardrc
 from config.mailcap import gen_mailcaprc
+from config.serve import gen_serverc
 
 with open('accounts.yml', 'r') as accounts_yaml:
 	accounts = yaml.safe_load(accounts_yaml)
@@ -32,3 +33,4 @@ gen_vdirsyncerrc(
 gen_khalrc(filter_by_type(accounts, ['caldav']))
 gen_khardrc(filter_by_type(accounts, ['carddav']))
 gen_mailcaprc()
+gen_serverc(filter_by_type(accounts, ['maildir']))
